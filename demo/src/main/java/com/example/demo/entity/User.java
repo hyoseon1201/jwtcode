@@ -1,9 +1,6 @@
 package com.example.demo.entity;
 
-import jakarta.persistence.ElementCollection;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.ArrayList;
@@ -13,12 +10,23 @@ import java.util.stream.Collectors;
 @Entity
 @Getter @Setter
 @Builder @NoArgsConstructor @AllArgsConstructor
+@EqualsAndHashCode(of = "username")
 public class User {
 
     @Id
-    private String id;
+    private String username;
 
     private String password;
+
+    @Column(nullable = false, unique = true)
+    private String nickname;
+
+    @Column(nullable = false)
+    private String phoneNumber;
+
+    private boolean verify;
+
+    private boolean resign;
 
     @ElementCollection(fetch = FetchType.LAZY)
     @Builder.Default
@@ -33,5 +41,9 @@ public class User {
 
     public void addRole(UserRole userRole) {
         userRoleList.add(userRole);
+    }
+
+    public boolean hasRole(UserRole userRole) {
+        return userRoleList.contains(userRole);
     }
 }

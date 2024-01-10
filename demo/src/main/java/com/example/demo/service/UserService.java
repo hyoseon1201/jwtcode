@@ -1,9 +1,12 @@
 package com.example.demo.service;
 
-import com.example.demo.dto.UserRegisterDTO;
-import com.example.demo.dto.UserRegisterResponseDTO;
+import com.example.demo.dto.account.UserRegisterDto;
+import com.example.demo.dto.account.UserRegisterResponseDto;
+import com.example.demo.dto.account.UserRemovalResponseDTO;
 
 public interface UserService {
 
-    UserRegisterResponseDTO register(UserRegisterDTO userRegisterDTO);
+    UserRegisterResponseDto register(UserRegisterDto userRegisterDTO);
+
+    UserRemovalResponseDTO resign(String username);
 }

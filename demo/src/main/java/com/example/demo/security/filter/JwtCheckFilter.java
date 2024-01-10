@@ -1,6 +1,6 @@
 package com.example.demo.security.filter;
 
-import com.example.demo.dto.UserDTO;
+import com.example.demo.dto.account.UserDto;
 import com.example.demo.util.JwtUtil;
 import com.google.gson.Gson;
 import jakarta.servlet.FilterChain;
@@ -57,11 +57,11 @@ public class JwtCheckFilter extends OncePerRequestFilter {
             String accessToken = authHeaderStr.substring(7);
             Map<String, Object> claims = JwtUtil.validateToken(accessToken);
 
-            String id = (String) claims.get("id");
+            String username = (String) claims.get("username");
             String password = (String) claims.get("password");
             List<String> roleNames = (List<String>) claims.get("roleNames");
 
-            UserDTO userDTO = new UserDTO(id, password, roleNames);
+            UserDto userDTO = new UserDto(username, password, roleNames);
 
             UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userDTO, password, userDTO.getAuthorities());
 

@@ -1,6 +1,6 @@
 package com.example.demo.security.handler;
 
-import com.example.demo.dto.UserDTO;
+import com.example.demo.dto.account.UserDto;
 import com.example.demo.util.JwtUtil;
 import com.google.gson.Gson;
 import jakarta.servlet.ServletException;
@@ -21,7 +21,7 @@ public class ApiLoginSuccessHandler implements AuthenticationSuccessHandler {
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
 
-        UserDTO userDTO = (UserDTO) authentication.getPrincipal();
+        UserDto userDTO = (UserDto) authentication.getPrincipal();
 
         Map<String, Object> claims = userDTO.getClaims();
 

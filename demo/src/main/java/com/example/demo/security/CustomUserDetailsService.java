@@ -1,6 +1,6 @@
 package com.example.demo.security;
 
-import com.example.demo.dto.UserDTO;
+import com.example.demo.dto.account.UserDto;
 import com.example.demo.entity.User;
 import com.example.demo.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,8 +28,8 @@ public class CustomUserDetailsService implements UserDetailsService {
             throw new UsernameNotFoundException("해당 유저가 존재하지 않습니다.");
         }
 
-        UserDTO userDTO = new UserDTO(
-                user.getId(),
+        UserDto userDTO = new UserDto(
+                user.getUsername(),
                 user.getPassword(),
                 user.getUserRoleList()
                         .stream()
