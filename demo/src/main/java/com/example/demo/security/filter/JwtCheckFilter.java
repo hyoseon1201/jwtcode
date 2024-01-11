@@ -43,6 +43,10 @@ public class JwtCheckFilter extends OncePerRequestFilter {
             return true;
         }
 
+        if (path.startsWith("/api/study/get-study")) {
+            return true;
+        }
+
         return false;
     }
 
@@ -70,6 +74,7 @@ public class JwtCheckFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
 
         } catch (Exception e) {
+            e.printStackTrace();
 
             Gson gson = new Gson();
             String msg = gson.toJson(Map.of("error", "ERROR_ACCESS_TOKEN"));
