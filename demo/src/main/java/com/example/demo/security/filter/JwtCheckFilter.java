@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -19,6 +20,8 @@ import java.util.Map;
 
 @Log4j2
 public class JwtCheckFilter extends OncePerRequestFilter {
+
+    private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
     // 해당 경로들은 jwt 토큰 체크를 진행하지 않고 통과시킨다
     @Override
@@ -43,7 +46,11 @@ public class JwtCheckFilter extends OncePerRequestFilter {
             return true;
         }
 
-        if (path.startsWith("/api/study/get-study")) {
+        if (pathMatcher.match("/api/study/*/get-study", path)) {
+            return true;
+        }
+
+        if (path.startsWith("/api/study/get-study-list")) {
             return true;
         }
 

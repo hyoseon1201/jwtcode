@@ -3,7 +3,7 @@ package com.example.demo.dto.account;
 import lombok.Data;
 
 @Data
-public class UserRemovalResponseDTO {
+public class UserRemoveResponseDTO {
 
     private String username;
 

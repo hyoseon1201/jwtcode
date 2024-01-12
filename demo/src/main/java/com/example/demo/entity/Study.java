@@ -18,8 +18,8 @@ public class Study {
 
     private String introduction;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "username",
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "creator",
             referencedColumnName = "username")
     private User creator;
 
@@ -31,4 +31,8 @@ public class Study {
     )
     private List<User> studyMembers = new ArrayList<>();
 
+    public void update(String introduction, String title) {
+        this.introduction = introduction;
+        this.title = title;
+    }
 }

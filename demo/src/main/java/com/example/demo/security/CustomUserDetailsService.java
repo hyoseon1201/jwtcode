@@ -5,6 +5,7 @@ import com.example.demo.entity.User;
 import com.example.demo.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -20,22 +21,24 @@ public class CustomUserDetailsService implements UserDetailsService {
     private final UserRepository userRepository;
 
     @Override
-    public UserDetails loadUserByUsername(String id) throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 
-        User user = userRepository.getWithRoles(id);
+        User user = userRepository.getWithRoles(username);
 
         if (user == null) {
             throw new UsernameNotFoundException("해당 유저가 존재하지 않습니다.");
         }
 
-        UserDto userDTO = new UserDto(
+        if (user.isResign()) {
+            throw new DisabledException("해당 유저는 비활성화 상태입니다.");
+        }
+
+        return new UserDto(
                 user.getUsername(),
                 user.getPassword(),
                 user.getUserRoleList()
                         .stream()
-                        .map(userRole -> userRole.name()).collect(Collectors.toList())
+                        .map(Enum::name).collect(Collectors.toList())
         );
-        
-        return userDTO;
     }
 }

@@ -1,8 +1,9 @@
 package com.example.demo.controller;
 
+import com.example.demo.dto.account.UserCreateStudyListResponseDto;
 import com.example.demo.dto.account.UserRegisterDto;
 import com.example.demo.dto.account.UserRegisterResponseDto;
-import com.example.demo.dto.account.UserRemovalResponseDTO;
+import com.example.demo.dto.account.UserRemoveResponseDTO;
 import com.example.demo.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -10,10 +11,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/account")
@@ -32,14 +32,20 @@ public class UserController {
 
     @PreAuthorize("isAuthenticated()")
     @PostMapping("/resign")
-    public ResponseEntity<UserRemovalResponseDTO> removalUser() {
+    public ResponseEntity<UserRemoveResponseDTO> removalUser() {
 
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
-        UserRemovalResponseDTO userRemovalResponseDTO = userService.resign(username);
+        UserRemoveResponseDTO userRemoveResponseDTO = userService.resign();
 
-        return ResponseEntity.status(HttpStatus.OK).body(userRemovalResponseDTO);
+        return ResponseEntity.status(HttpStatus.OK).body(userRemoveResponseDTO);
     }
 
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/created-study-list")
+    public ResponseEntity<List<UserCreateStudyListResponseDto>> findCreatedStudies() {
+
+        List<UserCreateStudyListResponseDto> studyList = userService.findCreateStudyList();
+
+        return ResponseEntity.status(HttpStatus.OK).body(studyList);
+    }
 
 }
