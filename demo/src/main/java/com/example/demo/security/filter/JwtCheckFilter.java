@@ -54,6 +54,10 @@ public class JwtCheckFilter extends OncePerRequestFilter {
             return true;
         }
 
+        if (path.startsWith("/api/account/check-email-token")) {
+            return true;
+        }
+
         return false;
     }
 

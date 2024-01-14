@@ -3,6 +3,7 @@ package com.example.demo.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,6 +19,8 @@ public class Study {
 
     private String introduction;
 
+    private LocalDateTime createdAt;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "creator",
             referencedColumnName = "username")
@@ -30,6 +33,13 @@ public class Study {
             inverseJoinColumns = @JoinColumn(name = "username")
     )
     private List<User> studyMembers = new ArrayList<>();
+
+    @ManyToMany
+    @JoinTable(
+            name = "study_tag",
+            joinColumns = @JoinColumn(name = "study_id"),
+            inverseJoinColumns = @JoinColumn(name = "tag_id"))
+    private List<Tag> tags;
 
     public void update(String introduction, String title) {
         this.introduction = introduction;

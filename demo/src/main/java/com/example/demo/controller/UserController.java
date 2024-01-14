@@ -9,8 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -47,5 +45,12 @@ public class UserController {
 
         return ResponseEntity.status(HttpStatus.OK).body(studyList);
     }
+
+    @GetMapping("/check-email-token")
+    public ResponseEntity<Boolean> checkEmailToken(@RequestParam(value = "token") String token, @RequestParam(value = "username") String username) {
+        userService.checkEmailToken(token, username);
+        return ResponseEntity.status(HttpStatus.OK).body(true);
+    }
+
 
 }
