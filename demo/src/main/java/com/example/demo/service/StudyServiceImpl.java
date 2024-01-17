@@ -7,7 +7,6 @@ import com.example.demo.repository.StudyRepository;
 import com.example.demo.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.modelmapper.ModelMapper;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -30,13 +29,20 @@ public class StudyServiceImpl implements StudyService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
 
-        ModelMapper modelMapper = new ModelMapper();
+        StudyCreateResponseDto createdStudy = StudyCreateResponseDto.builder()
+                .title(studyCreateRequestDto.getTitle())
+                .introduction(studyCreateRequestDto.getIntroduction())
+                .creatorUsername(username)
+                .build();
 
-        StudyCreateResponseDto createdStudy = modelMapper.map(studyCreateRequestDto, StudyCreateResponseDto.class);
-        createdStudy.setCreatorUsername(username);
+        Study studyToSave = Study.builder()
+                .title(createdStudy.getTitle())
+                .introduction(createdStudy.getIntroduction())
+                .creator(userRepository.findById(createdStudy.getCreatorUsername())
+                        .orElseThrow(() -> new IllegalArgumentException("해당 유저는 존재하지 않습니다.")))
+                .createdAt(LocalDateTime.now())
+                .build();
 
-        Study studyToSave = modelMapper.map(createdStudy, Study.class);
-        studyToSave.setCreatedAt(LocalDateTime.now());
         studyRepository.save(studyToSave);
 
         return createdStudy;
@@ -48,27 +54,30 @@ public class StudyServiceImpl implements StudyService {
         Study study = studyRepository.findById(studyId)
                 .orElseThrow(() -> new RuntimeException("해당 스터디는 존재하지 않습니다."));
 
-        ModelMapper modelMapper = new ModelMapper();
-
-        StudyResponseDto studyResponseDto = modelMapper.map(study, StudyResponseDto.class);
-        studyResponseDto.setCreatorName(study.getCreator().getUsername());
-
         List<String> memberNames = study.getStudyMembers().stream()
                 .map(User::getUsername)
                 .collect(Collectors.toList());
-        studyResponseDto.setMemberNames(memberNames);
 
-        return studyResponseDto;
+        return StudyResponseDto.builder()
+                .studyId(study.getId())
+                .title(study.getTitle())
+                .introduction(study.getIntroduction())
+                .creatorName(study.getCreator().getUsername())
+                .memberNames(memberNames)
+                .createdAt(LocalDateTime.now())
+                .build();
     }
 
     @Override
     public List<StudyListResponseDto> findStudyList() {
 
         List<Study> studyList = studyRepository.findAll();
-        ModelMapper modelMapper = new ModelMapper();
 
         return studyList.stream()
-                .map(study -> modelMapper.map(study, StudyListResponseDto.class))
+                .map(study -> StudyListResponseDto.builder()
+                        .studyId(study.getId())
+                        .studyTitle(study.getTitle())
+                        .build())
                 .collect(Collectors.toList());
     }
 
@@ -79,8 +88,6 @@ public class StudyServiceImpl implements StudyService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
 
-        ModelMapper modelMapper = new ModelMapper();
-
         Study study = studyRepository.findById(studyId)
                 .orElseThrow(() -> new RuntimeException("해당 스터디는 존재하지 않습니다."));
 
@@ -90,13 +97,11 @@ public class StudyServiceImpl implements StudyService {
 
         study.update(studyUpdateRequestDto.getIntroduction(), studyUpdateRequestDto.getTitle());
 
-        // 영속성 컨텍스트에 의해 관리되는 모든 엔티티의 변경 사항을 자동으로 DB에 반영
-        // 따라서 save 메서드 호출이 필요 없습니다.
-
-        StudyUpdateResponseDto updatedStudy = modelMapper.map(study, StudyUpdateResponseDto.class);
-        updatedStudy.setCreatorUsername(username);
-
-        return updatedStudy;
+        return StudyUpdateResponseDto.builder()
+                .title(study.getTitle())
+                .introduction(study.getIntroduction())
+                .creatorUsername(username)
+                .build();
     }
 
     @Override
@@ -122,8 +127,6 @@ public class StudyServiceImpl implements StudyService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
 
-        ModelMapper modelMapper = new ModelMapper();
-
         User user = userRepository.findById(username)
                 .orElseThrow(() -> new RuntimeException("해당 사용자는 존재하지 않습니다."));
 
@@ -136,10 +139,11 @@ public class StudyServiceImpl implements StudyService {
 
         study.getStudyMembers().add(user);
 
-        StudyJoinResponseDto joinUser = modelMapper.map(study, StudyJoinResponseDto.class);
-        joinUser.setJoinUsername(username);
-
-        return joinUser;
+        return StudyJoinResponseDto.builder()
+                .studyId(study.getId())
+                .title(study.getTitle())
+                .joinUsername(username)
+                .build();
     }
 
     @Override

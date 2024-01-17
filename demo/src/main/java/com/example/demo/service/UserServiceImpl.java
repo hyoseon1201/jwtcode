@@ -10,7 +10,6 @@ import com.example.demo.entity.UserRole;
 import com.example.demo.repository.StudyRepository;
 import com.example.demo.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.modelmapper.ModelMapper;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.core.Authentication;
@@ -20,9 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -41,13 +38,14 @@ public class UserServiceImpl implements UserService {
         User newUser = createNewUser(userRegisterDTO);
         generateEmailCheckTokenAndSendEmail(newUser);
 
-        ModelMapper modelMapper = new ModelMapper();
-        UserRegisterResponseDto userRegisterResponseDTO = modelMapper.map(newUser, UserRegisterResponseDto.class);
-
         List<String> roleNames = newUser.getRoleNames();
-        userRegisterResponseDTO.setRoleNames(roleNames);
 
-        return userRegisterResponseDTO;
+        return UserRegisterResponseDto.builder()
+                .username(newUser.getUsername())
+                .nickname(newUser.getNickname())
+                .phoneNumber(newUser.getPhoneNumber())
+                .roleNames(roleNames)
+                .build();
     }
 
     @Override
@@ -55,7 +53,6 @@ public class UserServiceImpl implements UserService {
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
-        ModelMapper modelMapper = new ModelMapper();
 
         User removalUser = userRepository.findById(username)
                 .orElseThrow(() -> new RuntimeException("해당 유저가 존재하지 않습니다."));
@@ -63,7 +60,10 @@ public class UserServiceImpl implements UserService {
         removalUser.setResign(true);
         userRepository.save(removalUser);
 
-        return modelMapper.map(removalUser, UserRemoveResponseDTO.class);
+        return UserRemoveResponseDTO.builder()
+                .username(removalUser.getUsername())
+                .resign(removalUser.isResign())
+                .build();
     }
 
     @Override
@@ -71,12 +71,14 @@ public class UserServiceImpl implements UserService {
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
-        ModelMapper modelMapper = new ModelMapper();
 
         List<Study> studyList = studyRepository.findAllByCreatorUsername(username);
 
         return studyList.stream()
-                .map(study -> modelMapper.map(study, UserCreateStudyListResponseDto.class))
+                .map(study -> UserCreateStudyListResponseDto.builder()
+                        .studyId(study.getId())
+                        .title(study.getTitle())
+                        .build())
                 .collect(Collectors.toList());
     }
 
@@ -100,10 +102,13 @@ public class UserServiceImpl implements UserService {
             throw new RuntimeException();
         }
 
-        ModelMapper modelMapper = new ModelMapper();
-        User newUser = modelMapper.map(userRegisterDTO, User.class);
-        newUser.setPassword(passwordEncoder.encode(userRegisterDTO.getPassword()));
-        newUser.addRole(UserRole.USER);
+        User newUser = User.builder()
+                .username(userRegisterDTO.getUsername())
+                .password(passwordEncoder.encode(userRegisterDTO.getPassword()))
+                .nickname(userRegisterDTO.getNickname())
+                .phoneNumber(userRegisterDTO.getPhoneNumber())
+                .userRoleList(List.of(UserRole.USER))
+                .build();
 
         return userRepository.save(newUser);
     }
