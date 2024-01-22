@@ -44,7 +44,7 @@ public class CustomSecurityConfig {
         http.authorizeHttpRequests(config ->
                 config
                         .requestMatchers("/test").hasRole("USER")
-                        .requestMatchers("/api/**").permitAll()
+                        .requestMatchers("/api/**", "/swagger-ui/**", "/api-docs/**", "/v3/api-docs/**").permitAll()
         );
 
         // 기본 formLogin
