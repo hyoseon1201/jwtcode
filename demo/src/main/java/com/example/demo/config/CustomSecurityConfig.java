@@ -1,9 +1,9 @@
 package com.example.demo.config;
 
+import com.example.demo.security.CustomUserDetailsService;
 import com.example.demo.security.filter.JwtCheckFilter;
-import com.example.demo.security.handler.ApiLoginFailureHandler;
-import com.example.demo.security.handler.ApiLoginSuccessHandler;
 import com.example.demo.security.handler.CustomAccessDeniedHandler;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,7 +23,7 @@ import java.util.Arrays;
 
 @Configuration
 @RequiredArgsConstructor
-@EnableMethodSecurity
+@EnableMethodSecurity(securedEnabled = true)
 public class CustomSecurityConfig {
 
     @Bean
@@ -36,23 +36,22 @@ public class CustomSecurityConfig {
 
         // jwt 사용시 세션 꺼준다
         http.sessionManagement(httpSecuritySessionManagementConfigurer -> {
-            httpSecuritySessionManagementConfigurer.sessionCreationPolicy(SessionCreationPolicy.NEVER);
+            httpSecuritySessionManagementConfigurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS);
         });
 
         http.csrf(AbstractHttpConfigurer::disable);
 
         http.authorizeHttpRequests(config ->
                 config
-                        .requestMatchers("/test").hasRole("USER")
-                        .requestMatchers("/api/**", "/swagger-ui/**", "/api-docs/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers("/**").permitAll()
         );
 
-        // 기본 formLogin
-        http.formLogin(httpSecurityFormLoginConfigurer -> {
-            httpSecurityFormLoginConfigurer.loginPage("/api/login");
-            httpSecurityFormLoginConfigurer.successHandler(new ApiLoginSuccessHandler());
-            httpSecurityFormLoginConfigurer.failureHandler(new ApiLoginFailureHandler());
-        });
+        http
+                .formLogin(AbstractHttpConfigurer::disable)
+                .exceptionHandling(exceptionHandlingConfigurer -> {
+                    exceptionHandlingConfigurer.authenticationEntryPoint((request, response, authException) ->
+                            response.sendError(HttpServletResponse.SC_UNAUTHORIZED));
+                });
 
         // 생성한 JwtCheckFilter를 적용
         http.addFilterBefore(new JwtCheckFilter(), UsernamePasswordAuthenticationFilter.class);

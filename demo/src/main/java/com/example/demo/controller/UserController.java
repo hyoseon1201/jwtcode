@@ -1,14 +1,12 @@
 package com.example.demo.controller;
 
-import com.example.demo.dto.account.UserCreateStudyListResponseDto;
-import com.example.demo.dto.account.UserRegisterDto;
-import com.example.demo.dto.account.UserRegisterResponseDto;
-import com.example.demo.dto.account.UserRemoveResponseDTO;
+import com.example.demo.dto.account.*;
 import com.example.demo.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,6 +17,12 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
+
+    @PostMapping("/login")
+    public ResponseEntity<UserLoginResponseDto> login(@RequestBody UserLoginRequestDto userLoginRequestDto) {
+        UserLoginResponseDto userLoginResponseDto = userService.login(userLoginRequestDto);
+        return ResponseEntity.status(HttpStatus.OK).body(userLoginResponseDto);
+    }
 
     @PostMapping("/sign-up")
     public ResponseEntity<UserRegisterResponseDto> generationUser(@RequestBody UserRegisterDto userRegisterDTO) {

@@ -2,7 +2,9 @@ package com.example.demo.util;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
 import java.time.ZonedDateTime;
@@ -10,6 +12,8 @@ import java.util.Date;
 import java.util.Map;
 
 @Log4j2
+@Service
+@RequiredArgsConstructor
 public class JwtUtil {
 
     private static String key = "1234567890123456789012345678901234567890";

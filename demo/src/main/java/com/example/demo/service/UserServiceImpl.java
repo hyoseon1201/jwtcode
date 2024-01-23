@@ -1,19 +1,21 @@
 package com.example.demo.service;
 
-import com.example.demo.dto.account.UserCreateStudyListResponseDto;
-import com.example.demo.dto.account.UserRegisterDto;
-import com.example.demo.dto.account.UserRegisterResponseDto;
-import com.example.demo.dto.account.UserRemoveResponseDTO;
+import com.example.demo.dto.account.*;
 import com.example.demo.entity.Study;
 import com.example.demo.entity.User;
 import com.example.demo.entity.UserRole;
 import com.example.demo.repository.StudyRepository;
 import com.example.demo.repository.UserRepository;
+import com.example.demo.security.CustomUserDetailsService;
+import com.example.demo.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +32,31 @@ public class UserServiceImpl implements UserService {
     private final StudyRepository studyRepository;
     private final PasswordEncoder passwordEncoder;
     private final JavaMailSender javaMailSender;
+    private final CustomUserDetailsService customUserDetailsService;
+    private final JwtUtil jwtUtil;
+
+    @Override
+    public UserLoginResponseDto login(UserLoginRequestDto userLoginRequestDto) {
+
+        UserDetails userDetails = customUserDetailsService.loadUserByUsername(userLoginRequestDto.getUsername());
+
+        if(!passwordEncoder.matches(userLoginRequestDto.getPassword(), userDetails.getPassword())) {
+            throw new BadCredentialsException("Invalid password");
+        }
+
+        // UserDetails 객체 안의 username과 authorities를 Map에 넣습니다.
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("username", userDetails.getUsername());
+        claims.put("password", userDetails.getPassword());
+        claims.put("roleNames", userDetails.getAuthorities());
+
+        // 토큰을 생성합니다.
+        String accessToken = jwtUtil.generateToken(claims, 10);
+        String refreshToken = jwtUtil.generateToken(claims, 60 * 24);
+
+        // 반환
+        return new UserLoginResponseDto(userLoginRequestDto.getUsername(), accessToken, refreshToken);
+    }
 
     @Transactional
     @Override

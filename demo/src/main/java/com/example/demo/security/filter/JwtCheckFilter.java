@@ -15,13 +15,13 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Log4j2
 public class JwtCheckFilter extends OncePerRequestFilter {
-
-    private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
     // 해당 경로들은 jwt 토큰 체크를 진행하지 않고 통과시킨다
     @Override
@@ -34,35 +34,7 @@ public class JwtCheckFilter extends OncePerRequestFilter {
 
         String path = request.getRequestURI();
 
-        if (path.startsWith("/api/login")) {
-            return true;
-        }
-
-        if (path.startsWith("/api/account/sign-up")) {
-            return true;
-        }
-
-        if (path.startsWith("/api/account/refresh")) {
-            return true;
-        }
-
-        if (pathMatcher.match("/api/study/*/get-study", path)) {
-            return true;
-        }
-
-        if (path.startsWith("/api/study/get-study-list")) {
-            return true;
-        }
-
-        if (path.startsWith("/api/account/check-email-token")) {
-            return true;
-        }
-
-        if (path.startsWith("/swagger-ui/")) {
-            return true;
-        }
-
-        if (path.startsWith("/api-docs/") || path.startsWith("/v3/api-docs/")) {
+        if (path.startsWith("/api")) {
             return true;
         }
 
@@ -82,7 +54,10 @@ public class JwtCheckFilter extends OncePerRequestFilter {
 
             String username = (String) claims.get("username");
             String password = (String) claims.get("password");
-            List<String> roleNames = (List<String>) claims.get("roleNames");
+            List<LinkedHashMap<String, String>> authorityClaims = (List<LinkedHashMap<String, String>>) claims.get("roleNames");
+            List<String> roleNames = authorityClaims.stream()
+                    .map(authMap -> authMap.get("authority"))
+                    .collect(Collectors.toList());
 
             UserDto userDTO = new UserDto(username, password, roleNames);
 

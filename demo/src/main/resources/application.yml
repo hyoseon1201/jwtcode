@@ -25,5 +25,6 @@ spring:
 logging:
   level:
     org.hibernate.SQL: trace
-    org.springframework.security: debug
+    org.springframework.security: trace
     org.ssafy.studyback: DEBUG
+    com.example.demo.JwtCheckFilter: DEBUG
