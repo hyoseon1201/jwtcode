@@ -9,6 +9,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -38,8 +39,8 @@ public class StudyServiceImpl implements StudyService {
         Study studyToSave = Study.builder()
                 .title(createdStudy.getTitle())
                 .introduction(createdStudy.getIntroduction())
-                .creator(userRepository.findById(createdStudy.getCreatorUsername())
-                        .orElseThrow(() -> new IllegalArgumentException("해당 유저는 존재하지 않습니다.")))
+                .creator(userRepository.getWithRoles(createdStudy.getCreatorUsername())
+                        .orElseThrow(() -> new UsernameNotFoundException("해당 유저는 존재하지 않습니다.")))
                 .createdAt(LocalDateTime.now())
                 .build();
 
@@ -127,7 +128,7 @@ public class StudyServiceImpl implements StudyService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
 
-        User user = userRepository.findById(username)
+        User user = userRepository.getWithRoles(username)
                 .orElseThrow(() -> new RuntimeException("해당 사용자는 존재하지 않습니다."));
 
         Study study = studyRepository.findById(studyId)
@@ -152,7 +153,7 @@ public class StudyServiceImpl implements StudyService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
 
-        User user = userRepository.findById(username)
+        User user = userRepository.getWithRoles(username)
                 .orElseThrow(() -> new RuntimeException("해당 사용자는 존재하지 않습니다."));
 
         Study study = studyRepository.findById(studyId)

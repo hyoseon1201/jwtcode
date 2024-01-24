@@ -6,9 +6,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface UserRepository extends JpaRepository<User, String> {
+import java.util.Optional;
+
+public interface UserRepository extends JpaRepository<User, Integer> {
 
     @EntityGraph(attributePaths = "userRoleList")
     @Query("select a from User a where a.username = :username")
-    User getWithRoles(@Param("username") String username);
+    Optional<User> getWithRoles(@Param("username") String username);
+
 }

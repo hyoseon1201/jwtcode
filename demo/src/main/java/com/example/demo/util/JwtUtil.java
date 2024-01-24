@@ -16,7 +16,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class JwtUtil {
 
-    private static String key = "1234567890123456789012345678901234567890";
+    private static final String key = "123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890";
 
     public static String generateToken(Map<String, Object> valueMap, int min) {
 
@@ -66,6 +66,16 @@ public class JwtUtil {
             throw new CustomJwtException("Error");
         }
         return claim;
+    }
+
+    public static Long getExpirationDateFromToken(String token) {
+        SecretKey key = Keys.hmacShaKeyFor(JwtUtil.key.getBytes());
+        Claims claims = Jwts.parser()
+                .setSigningKey(key)
+                .parseClaimsJws(token)
+                .getBody();
+
+        return claims.getExpiration().getTime();
     }
 
 }

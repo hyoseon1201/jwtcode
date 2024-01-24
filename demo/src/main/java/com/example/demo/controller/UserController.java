@@ -6,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,9 +24,9 @@ public class UserController {
     }
 
     @PostMapping("/sign-up")
-    public ResponseEntity<UserRegisterResponseDto> generationUser(@RequestBody UserRegisterDto userRegisterDTO) {
+    public ResponseEntity<UserRegisterResponseDto> generationUser(@RequestBody UserRegisterRequestDto userRegisterRequestDTO) {
 
-        UserRegisterResponseDto userRegisterResponseDTO = userService.register(userRegisterDTO);
+        UserRegisterResponseDto userRegisterResponseDTO = userService.register(userRegisterRequestDTO);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(userRegisterResponseDTO);
     }

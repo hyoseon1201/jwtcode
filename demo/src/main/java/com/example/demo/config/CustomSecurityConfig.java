@@ -26,6 +26,8 @@ import java.util.Arrays;
 @EnableMethodSecurity(securedEnabled = true)
 public class CustomSecurityConfig {
 
+    private final CustomUserDetailsService userDetailsService;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
@@ -51,6 +53,14 @@ public class CustomSecurityConfig {
                 .exceptionHandling(exceptionHandlingConfigurer -> {
                     exceptionHandlingConfigurer.authenticationEntryPoint((request, response, authException) ->
                             response.sendError(HttpServletResponse.SC_UNAUTHORIZED));
+                });
+
+        http
+                .rememberMe(httpSecurityRememberMeConfigurer -> {
+                    httpSecurityRememberMeConfigurer.rememberMeParameter("remember");
+                    httpSecurityRememberMeConfigurer.tokenValiditySeconds(604800);
+                    httpSecurityRememberMeConfigurer.alwaysRemember(false);
+                    httpSecurityRememberMeConfigurer.userDetailsService(userDetailsService);
                 });
 
         // 생성한 JwtCheckFilter를 적용

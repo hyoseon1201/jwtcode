@@ -15,7 +15,9 @@ import java.util.stream.Collectors;
 @EqualsAndHashCode(of = "username")
 public class User {
 
-    @Id
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int userId;
+
     private String username;
 
     private String password;
@@ -47,7 +49,7 @@ public class User {
     @ManyToMany
     @JoinTable(
             name = "user_tag",
-            joinColumns = @JoinColumn(name = "username"),
+            joinColumns = @JoinColumn(name = "userId"),
             inverseJoinColumns = @JoinColumn(name = "tag_id"))
     private List<Tag> tags;
 

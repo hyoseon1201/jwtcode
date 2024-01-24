@@ -22,6 +22,11 @@ spring:
       max-request-size: 30MB
       max-file-size: 10MB
 
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
 logging:
   level:
     org.hibernate.SQL: trace

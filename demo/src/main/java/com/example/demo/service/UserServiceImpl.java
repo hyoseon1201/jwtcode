@@ -1,9 +1,11 @@
 package com.example.demo.service;
 
 import com.example.demo.dto.account.*;
+import com.example.demo.entity.RefreshToken;
 import com.example.demo.entity.Study;
 import com.example.demo.entity.User;
 import com.example.demo.entity.UserRole;
+import com.example.demo.repository.RefreshTokenRepository;
 import com.example.demo.repository.StudyRepository;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.security.CustomUserDetailsService;
@@ -11,16 +13,18 @@ import com.example.demo.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -33,36 +37,47 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final JavaMailSender javaMailSender;
     private final CustomUserDetailsService customUserDetailsService;
-    private final JwtUtil jwtUtil;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     @Override
     public UserLoginResponseDto login(UserLoginRequestDto userLoginRequestDto) {
-
         UserDetails userDetails = customUserDetailsService.loadUserByUsername(userLoginRequestDto.getUsername());
 
         if(!passwordEncoder.matches(userLoginRequestDto.getPassword(), userDetails.getPassword())) {
             throw new BadCredentialsException("Invalid password");
         }
 
-        // UserDetails 객체 안의 username과 authorities를 Map에 넣습니다.
         Map<String, Object> claims = new HashMap<>();
         claims.put("username", userDetails.getUsername());
         claims.put("password", userDetails.getPassword());
         claims.put("roleNames", userDetails.getAuthorities());
 
-        // 토큰을 생성합니다.
-        String accessToken = jwtUtil.generateToken(claims, 10);
-        String refreshToken = jwtUtil.generateToken(claims, 60 * 24);
+        String accessToken = JwtUtil.generateToken(claims, 5);
+        String refreshToken = JwtUtil.generateToken(claims, 10);
 
-        // 반환
+        Long refreshTokenExpiry = JwtUtil.getExpirationDateFromToken(refreshToken);
+
+        Instant refreshTokenExpiryDate = Instant.ofEpochMilli(refreshTokenExpiry);
+        DateTimeFormatter formatter = DateTimeFormatter.ISO_INSTANT;
+        String formattedExpiryDate = formatter.format(refreshTokenExpiryDate);
+
+        RefreshToken refreshTokenEntity = RefreshToken.builder()
+                .refreshToken(refreshToken)
+                .username(userDetails.getUsername())
+                .expiryDate(formattedExpiryDate)
+                .password(userDetails.getPassword())
+                .authorities(userDetails.getAuthorities())
+                .build();
+        refreshTokenRepository.save(refreshTokenEntity);
+
         return new UserLoginResponseDto(userLoginRequestDto.getUsername(), accessToken, refreshToken);
     }
 
     @Transactional
     @Override
-    public UserRegisterResponseDto register(UserRegisterDto userRegisterDTO) {
+    public UserRegisterResponseDto register(UserRegisterRequestDto userRegisterRequestDTO) {
 
-        User newUser = createNewUser(userRegisterDTO);
+        User newUser = createNewUser(userRegisterRequestDTO);
         generateEmailCheckTokenAndSendEmail(newUser);
 
         List<String> roleNames = newUser.getRoleNames();
@@ -81,8 +96,8 @@ public class UserServiceImpl implements UserService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
 
-        User removalUser = userRepository.findById(username)
-                .orElseThrow(() -> new RuntimeException("해당 유저가 존재하지 않습니다."));
+        User removalUser = userRepository.getWithRoles(username)
+                .orElseThrow(() -> new UsernameNotFoundException("해당 유저는 존재하지 않습니다."));
 
         removalUser.setResign(true);
         userRepository.save(removalUser);
@@ -112,9 +127,9 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public void checkEmailToken(String token, String username) {
-        User user = userRepository.findById(username)
-                .orElseThrow(() -> new RuntimeException("해당 유저가 존재하지 않습니다."));
 
+        User user = userRepository.getWithRoles(username)
+                .orElseThrow(() -> new UsernameNotFoundException("해당 유저는 존재하지 않습니다."));
         if (!user.getEmailCheckToken().equals(token)) {
             throw new RuntimeException("유효하지 않은 토큰입니다.");
         }
@@ -123,17 +138,17 @@ public class UserServiceImpl implements UserService {
         user.setJoinedAt(LocalDateTime.now());
     }
 
-    private User createNewUser(UserRegisterDto userRegisterDTO) {
+    private User createNewUser(UserRegisterRequestDto userRegisterRequestDTO) {
 
-        if (userRepository.existsById(userRegisterDTO.getUsername())) {
-            throw new RuntimeException();
+        if (userRepository.getWithRoles(userRegisterRequestDTO.getUsername()).isPresent()) {
+            throw new RuntimeException("이미 존재하는 이메일입니다.");
         }
 
         User newUser = User.builder()
-                .username(userRegisterDTO.getUsername())
-                .password(passwordEncoder.encode(userRegisterDTO.getPassword()))
-                .nickname(userRegisterDTO.getNickname())
-                .phoneNumber(userRegisterDTO.getPhoneNumber())
+                .username(userRegisterRequestDTO.getUsername())
+                .password(passwordEncoder.encode(userRegisterRequestDTO.getPassword()))
+                .nickname(userRegisterRequestDTO.getNickname())
+                .phoneNumber(userRegisterRequestDTO.getPhoneNumber())
                 .userRoleList(List.of(UserRole.USER))
                 .build();
 

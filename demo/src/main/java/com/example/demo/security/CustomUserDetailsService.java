@@ -23,11 +23,8 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 
-        User user = userRepository.getWithRoles(username);
-
-        if (user == null) {
-            throw new UsernameNotFoundException("해당 유저가 존재하지 않습니다.");
-        }
+        User user = userRepository.getWithRoles(username)
+                .orElseThrow(() -> new UsernameNotFoundException("해당 유저는 존재하지 않습니다."));
 
         if (user.isResign()) {
             throw new DisabledException("해당 유저는 비활성화 상태입니다.");

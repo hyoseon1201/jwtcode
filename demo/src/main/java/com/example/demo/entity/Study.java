@@ -23,14 +23,14 @@ public class Study {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "creator",
-            referencedColumnName = "username")
+            referencedColumnName = "userId")
     private User creator;
 
     @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(
             name = "user_study",
             joinColumns = @JoinColumn(name = "study_id"),
-            inverseJoinColumns = @JoinColumn(name = "username")
+            inverseJoinColumns = @JoinColumn(name = "userId")
     )
     private List<User> studyMembers = new ArrayList<>();
 
